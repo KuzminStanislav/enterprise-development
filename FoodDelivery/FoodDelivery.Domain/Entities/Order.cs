@@ -44,7 +44,7 @@ public class Order
     /// <summary>
     /// Назначенный курьер
     /// </summary>
-    public required Courier? Courier { get; set; }
+    public Courier? Courier { get; set; }
 
     /// <summary>
     /// Адрес доставки заказа
