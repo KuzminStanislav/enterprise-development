@@ -1,6 +1,5 @@
 ﻿using FoodDelivery.Domain.Entities;
 using FoodDelivery.Domain.Enums;
-using Xunit;
 
 namespace FoodDelivery.Tests;
 
@@ -19,25 +18,23 @@ public class QueriesTest(QueriesTestFixture fixture) : IClassFixture<QueriesTest
     [Fact]
     public void GetCustomersByRestaurant()
     {
-        var targetRestaurantId = 0;
-        var expectedCustomerName = new[] 
+        var targetRestaurantId = 1;
+        var expectedCustomerNames = new[] 
         { 
             "Анна Иванова", 
             "Иван Лапшин", 
             "Максим Громов" 
         };
 
-        var resultCustomers = _orders
-            .Where(o => o.Restaurant?.Id == targetRestaurantId)
-            .Select(o => o.Customer)
-            .Distinct()
-            .OrderBy(c => c?.Name)
-            .ToList();
+        var customers = _orders
+        .Where(o => o.RestaurantId == targetRestaurantId)
+        .Select(o => o.Customer)
+        .DistinctBy(c => c.Id)
+        .OrderBy(c => c.Name)
+        .Select(c => c.Name)
+        .ToList();
 
-        Assert.NotEmpty(resultCustomers);
-        Assert.Equal(expectedCustomerName[0], resultCustomers[0]?.Name);
-        Assert.Equal(expectedCustomerName[1], resultCustomers[1]?.Name);
-        Assert.Equal(expectedCustomerName[2], resultCustomers[2]?.Name);
+        Assert.Equal(expectedCustomerNames, resultCustomers);
     }
 
     /// <summary>
@@ -69,13 +66,22 @@ public class QueriesTest(QueriesTestFixture fixture) : IClassFixture<QueriesTest
     [Fact]
     public void GetOrderCountByRestaurant()
     {
-        var expectedRestaurantCount = 10;
-        var restaurant1Id = 1;
-        var expectedRestaurant1OrderCount = 3;
-        var restaurant8Id = 8;
-        var expectedRestaurant8OrderCount = 0;
+        var expectedRestaurantOrderCounts = new[]
+        {
+            new { RestaurantId = 1, OrderCount = 3 },
+            new { RestaurantId = 2, OrderCount = 1 },
+            new { RestaurantId = 3, OrderCount = 1 },
+            new { RestaurantId = 4, OrderCount = 1 },
+            new { RestaurantId = 5, OrderCount = 0 },
+            new { RestaurantId = 6, OrderCount = 1 },
+            new { RestaurantId = 7, OrderCount = 0 },
+            new { RestaurantId = 8, OrderCount = 0 },
+            new { RestaurantId = 9, OrderCount = 1 },
+            new { RestaurantId = 10, OrderCount = 1 }
+        };
 
         var restaurantOrderCounts = _restaurants
+            .OrderBy(r => r.Id)
             .Select(r => new
             {
                 Restaurant = r,
@@ -83,13 +89,7 @@ public class QueriesTest(QueriesTestFixture fixture) : IClassFixture<QueriesTest
             })
             .ToList();
 
-        Assert.Equal(expectedRestaurantCount, restaurantOrderCounts.Count);
-
-        var restaurant1Stats = restaurantOrderCounts.First(r => r.Restaurant.Id == restaurant1Id);
-        Assert.Equal(expectedRestaurant1OrderCount, restaurant1Stats.OrderCount);
-
-        var restaurant8Stats = restaurantOrderCounts.First(r => r.Restaurant.Id == restaurant8Id);
-        Assert.Equal(expectedRestaurant8OrderCount, restaurant8Stats.OrderCount);
+        Assert.Equal(expectedRestaurantOrderCounts, restaurantOrderCounts);
     }
 
     /// <summary>
@@ -98,22 +98,29 @@ public class QueriesTest(QueriesTestFixture fixture) : IClassFixture<QueriesTest
     [Fact]
     public void GetTopFiveCouriersByOrderCount()
     {
-        var expectedTopCourierTripCount = 3;
+        var expectedTopCouriers = new[]
+        {
+            new { Courier = 1, OrderCount = 3 },
+            new { Courier = 2, OrderCount = 3 },
+            new { Courier = 3, OrderCount = 1 },
+            new { Courier = 4, OrderCount = 1 },
+            new { Courier = 5, OrderCount = 1 }
+        };
 
         var topCouriers = _orders
             .Where(order => order.CourierId.HasValue)
             .GroupBy(order => order.CourierId.GetValueOrDefault())
             .Select(group => new 
             { 
-                Courier = group.Key, OrderCount = group.Count() 
+                Courier = group.Key, 
+                OrderCount = group.Count() 
             })
             .OrderByDescending(item => item.OrderCount)
             .ThenBy(item => item.Courier)
             .Take(5)
             .ToList();
 
-        Assert.NotEmpty(topCouriers);
-        Assert.Equal(expectedTopCourierTripCount, topCouriers.First().OrderCount);
+        Assert.Equal(expectedTopCouriers, topCouriers);
     }
 
     /// <summary>
@@ -122,22 +129,26 @@ public class QueriesTest(QueriesTestFixture fixture) : IClassFixture<QueriesTest
     [Fact]
     public void GetTopFiveCustomersByTotalSpent()
     {
-        var expectedTopCustomerId = 4;
-        var expectedTopCustomerTotalSpent = 4200;
+        var expectedTopCustomers = new[]
+        {
+            new { CustomerId = 5, TotalSpent = 4200m },
+            new { CustomerId = 10, TotalSpent = 3500m },
+            new { CustomerId = 9, TotalSpent = 2100m },
+            new { CustomerId = 7, TotalSpent = 1800m },
+            new { CustomerId = 2, TotalSpent = 1500m }
+        };
 
         var topCustomers = _orders
             .GroupBy(order => order.Customer)
             .Select(group => new
             {
-                CustomerId = group.Key,
+                CustomerId = group.Key.Id,
                 TotalSpent = group.Sum(order => order.TotalAmount)
             })
             .OrderByDescending(item => item.TotalSpent)
             .Take(5)
             .ToList();
 
-        Assert.NotEmpty(topCustomers);
-        Assert.Equal(expectedTopCustomerId, topCustomers.First().CustomerId?.Id);
-        Assert.Equal(expectedTopCustomerTotalSpent, topCustomers.First().TotalSpent);
+        Assert.Equal(expectedTopCustomers, topCustomers);
     }
 }
