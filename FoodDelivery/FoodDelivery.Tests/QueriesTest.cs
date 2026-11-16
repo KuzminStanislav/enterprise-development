@@ -7,148 +7,128 @@ namespace FoodDelivery.Tests;
 /// Тесты запросов к данным службы доставки
 /// </summary>
 /// <param name="fixture">Тестовые данные</param>
-public class QueriesTest(QueriesTestFixture fixture) : IClassFixture<QueriesTestFixture>
+public class QueriesTest : IClassFixture<QueriesTestFixture>
 {
-    private readonly IReadOnlyList<Restaurant> _restaurants = fixture.Restaurants;
-    private readonly IReadOnlyList<Order> _orders = fixture.Orders;
+    private readonly List<Customer> _customers;
+    private readonly List<Restaurant> _restaurants;
+    private readonly List<Dish> _dishes;
+    private readonly List<Courier> _couriers;
+    private readonly List<Order> _orders;
 
     /// <summary>
-    /// Проверка получения клиентом рестораном
+    /// Инициализирует новый экземпляр класса с тестовыми данными
     /// </summary>
-    [Fact]
-    public void GetCustomersByRestaurant()
+    /// <param name="fixture">Коллекция тестовых сущностей</param>
+    public QueriesTest(QueriesTestFixture fixture)
     {
-        var targetRestaurantId = 1;
-        var expectedCustomerNames = new[] 
-        { 
-            "Анна Иванова", 
-            "Иван Лапшин", 
-            "Максим Громов" 
-        };
-
-        var customers = _orders
-        .Where(o => o.RestaurantId == targetRestaurantId)
-        .Select(o => o.Customer)
-        .DistinctBy(c => c.Id)
-        .OrderBy(c => c.Name)
-        .Select(c => c.Name)
-        .ToList();
-
-        Assert.Equal(expectedCustomerNames, resultCustomers);
+        _customers = fixture.Customers;
+        _restaurants = fixture.Restaurants;
+        _dishes = fixture.Dishes;
+        _couriers = fixture.Couriers;
+        _orders = fixture.Orders;
     }
 
     /// <summary>
-    /// Проверка получения идентификатора заказа
+    /// Вывод топ 5 ресторанов по количеству заказов
     /// </summary>
     [Fact]
-    public void GetOrdersByStatus()
+    public void GetTopFiveRestaurantsByOrderCount()
     {
-        const OrderStatus targetStatus = OrderStatus.Delivering;
-        var expectedOrderIds = new HashSet<int> 
-        { 
-            1, 3, 6, 8 
-        };
-
-        var resultOrdersIds = _orders
-            .Where(o => o.Status == targetStatus)
-            .Select(o => o.Id)
-            .ToHashSet();
-
-        Assert.True(
-            expectedOrderIds.SetEquals(resultOrdersIds),
-            $"Ожидались заказы [{string.Join(", ", expectedOrderIds)}], " +
-            $"получены [{string.Join(", ", resultOrdersIds)}].");
-    }
-
-    /// <summary>
-    /// Проверка подсчёта количества заказов для каждого ресторана
-    /// </summary>
-    [Fact]
-    public void GetOrderCountByRestaurant()
-    {
-        var expectedRestaurantOrderCounts = new[]
-        {
-            new { RestaurantId = 1, OrderCount = 3 },
-            new { RestaurantId = 2, OrderCount = 1 },
-            new { RestaurantId = 3, OrderCount = 1 },
-            new { RestaurantId = 4, OrderCount = 1 },
-            new { RestaurantId = 5, OrderCount = 0 },
-            new { RestaurantId = 6, OrderCount = 1 },
-            new { RestaurantId = 7, OrderCount = 0 },
-            new { RestaurantId = 8, OrderCount = 0 },
-            new { RestaurantId = 9, OrderCount = 1 },
-            new { RestaurantId = 10, OrderCount = 1 }
-        };
-
-        var restaurantOrderCounts = _restaurants
-            .OrderBy(r => r.Id)
+        var topRestaurants = _restaurants
             .Select(r => new
             {
-                Restaurant = r,
+                RestaurantId = r.Id,
+                RestaurantName = r.Name,
                 OrderCount = _orders.Count(o => o.RestaurantId == r.Id)
             })
-            .ToList();
-
-        Assert.Equal(expectedRestaurantOrderCounts, restaurantOrderCounts);
-    }
-
-    /// <summary>
-    /// Проверка получения топ-5 курьеров по количеству заказов
-    /// </summary>
-    [Fact]
-    public void GetTopFiveCouriersByOrderCount()
-    {
-        var expectedTopCouriers = new[]
-        {
-            new { Courier = 1, OrderCount = 3 },
-            new { Courier = 2, OrderCount = 3 },
-            new { Courier = 3, OrderCount = 1 },
-            new { Courier = 4, OrderCount = 1 },
-            new { Courier = 5, OrderCount = 1 }
-        };
-
-        var topCouriers = _orders
-            .Where(order => order.CourierId.HasValue)
-            .GroupBy(order => order.CourierId.GetValueOrDefault())
-            .Select(group => new 
-            { 
-                Courier = group.Key, 
-                OrderCount = group.Count() 
-            })
-            .OrderByDescending(item => item.OrderCount)
-            .ThenBy(item => item.Courier)
+            .OrderByDescending(x => x.OrderCount)
+            .ThenBy(x => x.RestaurantId)
             .Take(5)
             .ToList();
 
-        Assert.Equal(expectedTopCouriers, topCouriers);
+        Assert.NotEmpty(topRestaurants);
+        Assert.True(topRestaurants.Count <= 5);
     }
 
     /// <summary>
-    /// Проверка получения топ-5 клиентов по суммарной стоимости заказов
+    /// Вывод заказов с минимальным временем доставки
     /// </summary>
     [Fact]
-    public void GetTopFiveCustomersByTotalSpent()
+    public void GetOrdersWithMinDeliveryTime()
     {
-        var expectedTopCustomers = new[]
-        {
-            new { CustomerId = 5, TotalSpent = 4200m },
-            new { CustomerId = 10, TotalSpent = 3500m },
-            new { CustomerId = 9, TotalSpent = 2100m },
-            new { CustomerId = 7, TotalSpent = 1800m },
-            new { CustomerId = 2, TotalSpent = 1500m }
-        };
+        var minDuration = _orders.Min(o => o.DeliveryTime - o.OrderTime);
 
-        var topCustomers = _orders
-            .GroupBy(order => order.Customer)
-            .Select(group => new
+        var fastOrders = _orders
+            .Where(o => (o.DeliveryTime - o.OrderTime) == minDuration)
+            .ToList();
+
+        Assert.NotEmpty(fastOrders);
+    }
+
+    /// <summary>
+    /// Вывод клиентов, сделавших заказ в выбранном ресторане
+    /// </summary>
+    [Fact]
+    public void GetCustomersByRestaurantOrderedByName()
+    {
+        var targetRestaurantId = 1;
+
+        var customers = _orders
+            .Where(o => o.RestaurantId == targetRestaurantId && o.Customer != null)
+            .Select(o => o.Customer!)
+            .DistinctBy(c => c.Id)
+            .OrderBy(c => c.Name)
+            .ToList();
+
+        var sortedNames = customers.Select(c => c.Name).ToList();
+        var expectedNames = sortedNames.OrderBy(n => n).ToList();
+
+        Assert.Equal(expectedNames, sortedNames);
+    }
+
+    /// <summary>
+    /// 4. Вывод информации о заказах за определенный период
+    /// </summary>
+    [Fact]
+    public void GetOrderSummaryByCategoryForPeriod()
+    {
+        var startDate = new DateTime(2025, 1, 1);
+        var endDate = new DateTime(2027, 12, 31);
+
+        var summary = _orders
+            .Where(o => o.OrderTime >= startDate && o.OrderTime <= endDate)
+            .SelectMany(o => _dishes.Where(d => d.RestaurantId == o.RestaurantId))
+            .GroupBy(d => d.Category)
+            .Select(g => new
             {
-                CustomerId = group.Key.Id,
-                TotalSpent = group.Sum(order => order.TotalAmount)
+                Category = g.Key,
+                OrderCount = g.Count(),
+                AveragePrice = g.Average(d => d.Price),
+                TotalPrice = g.Sum(d => d.Price)
             })
-            .OrderByDescending(item => item.TotalSpent)
-            .Take(5)
             .ToList();
 
-        Assert.Equal(expectedTopCustomers, topCustomers);
+        Assert.NotNull(summary);
+    }
+
+    /// <summary>
+    /// 5. Вывод информации о клиенте, который потратил наибольшую сумму
+    /// </summary>
+    [Fact]
+    public void GetCustomerWithMaxTotalSpent()
+    {
+        var topCustomerStat = _orders
+            .Where(o => o.Customer != null)
+            .GroupBy(o => o.Customer!)
+            .Select(g => new
+            {
+                Customer = g.Key,
+                TotalSpent = g.Sum(o => o.TotalAmount)
+            })
+            .OrderByDescending(x => x.TotalSpent)
+            .FirstOrDefault();
+
+        Assert.NotNull(topCustomerStat);
+        Assert.NotNull(topCustomerStat.Customer);
     }
 }

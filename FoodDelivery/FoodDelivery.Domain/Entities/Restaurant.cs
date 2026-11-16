@@ -26,9 +26,14 @@ public class Restaurant
     public required string Address { get; set; }
 
     /// <summary>
-    /// Телефон ресторана
+    /// Рейтинг ресторана
     /// </summary>
-    public string? Phone { get; set; }
+    public double Rating { get; set; }
+
+    /// <summary>
+    /// Часы работы ресторана
+    /// </summary>
+    public required string WorkingHours { get; set; }
 
     /// <summary>
     /// Флаг активности

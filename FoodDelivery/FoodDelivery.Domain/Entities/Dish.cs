@@ -27,9 +27,9 @@ public class Dish
     public required string Name { get; set; }
 
     /// <summary>
-    /// Подробное описание блюда и состава (необязательное поле)
+    /// Вес блюда в граммах
     /// </summary>
-    public string? Description { get; set; }
+    public int Weight { get; set; }
 
     /// <summary>
     /// Стоимость блюда в рублях
@@ -42,7 +42,7 @@ public class Dish
     public DishCategory Category { get; set; }
 
     /// <summary>
-    /// Доступно ли блюдо для заказа в данный момент
+    /// Ресторан, в меню которого входит блюдо
     /// </summary>
-    public bool IsAvailable { get; set; } = true;
+    public Restaurant? Restaurant { get; set; }
 }

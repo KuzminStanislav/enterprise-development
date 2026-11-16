@@ -13,7 +13,7 @@ public class Customer
     /// Уникальный идентификатор клиента
     /// </summary>
     [Key]
-    public int Id {  get; set; }
+    public int Id { get; set; }
 
     /// <summary>
     /// ФИО клиента
@@ -26,12 +26,7 @@ public class Customer
     public required string Phone { get; set; }
 
     /// <summary>
-    /// Адрес электронной почты
-    /// </summary>
-    public string? Email { get; set; }
-
-    /// <summary>
     /// Адрес доставки
     /// </summary>
-    public string? DefaultAdress { get; set; }
+    public required string DeliveryAddress { get; set; }
 }

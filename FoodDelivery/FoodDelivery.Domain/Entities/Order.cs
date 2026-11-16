@@ -47,6 +47,16 @@ public class Order
     public Courier? Courier { get; set; }
 
     /// <summary>
+    /// Дата и время оформления заказа
+    /// </summary>
+    public DateTime OrderTime { get; set; }
+
+    /// <summary>
+    /// Дата и время доставки заказа
+    /// </summary>
+    public DateTime DeliveryTime { get; set; }
+
+    /// <summary>
     /// Адрес доставки заказа
     /// </summary>
     public required string DeliveryAddress { get; set; }
@@ -65,11 +75,6 @@ public class Order
     /// Выбранный способ оплаты
     /// </summary>
     public PaymentMethod PaymentMethod { get; set; }
-
-    /// <summary>
-    /// Дата и время создания заказа
-    /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Комментарий к заказу для курьера или кухни
