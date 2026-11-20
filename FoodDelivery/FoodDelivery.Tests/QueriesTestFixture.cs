@@ -19,6 +19,11 @@ public class QueriesTestFixture
     public readonly List<Restaurant> Restaurants;
 
     /// <summary>
+    /// Список категорий блюд
+    /// </summary>
+    public readonly List<DishCategory> DishCategories;
+
+    /// <summary>
     /// Список блюд
     /// </summary>
     public readonly List<Dish> Dishes;
@@ -40,7 +45,8 @@ public class QueriesTestFixture
     {
         Customers = GetCustomers();
         Restaurants = GetRestaurants();
-        Dishes = GetDishes();
+        DishCategories = GetDishCategories();
+        Dishes = GetDishes(DishCategories);
         Couriers = GetCouriers();
         Orders = GetOrders(Customers, Restaurants, Couriers);
     }
@@ -82,23 +88,50 @@ public class QueriesTestFixture
     ];
 
     /// <summary>
+    /// Создаёт справочник категорий блюд
+    /// </summary>
+    /// <returns>Список категорий блюд</returns>
+    private static List<DishCategory> GetDishCategories() =>
+    [
+        new DishCategory { Id = 1, Name = "Фастфуд" },
+        new DishCategory { Id = 2, Name = "Основные блюда" },
+        new DishCategory { Id = 3, Name = "Напитки" },
+        new DishCategory { Id = 4, Name = "Пицца" },
+        new DishCategory { Id = 5, Name = "Суши и роллы" },
+        new DishCategory { Id = 6, Name = "Супы" },
+        new DishCategory { Id = 7, Name = "Салаты" },
+        new DishCategory { Id = 8, Name = "Десерты" },
+        new DishCategory { Id = 9, Name = "Завтраки" },
+        new DishCategory { Id = 10, Name = "Закуски" }
+    ];
+
+    /// <summary>
     /// Создаёт список блюд
     /// </summary>
-    /// <param name="restaurants">Список ресторанов для привязки</param>
+    /// <param name="categories">Категории блюд</param>
     /// <returns>Список блюд</returns>
-    private static List<Dish> GetDishes() =>
-    [
-        new Dish { Id = 1, RestaurantId = 1, Name = "Гранд", Weight = 250, Price = 190, Category = DishCategory.FastFood },
-        new Dish { Id = 2, RestaurantId = 1, Name = "Картофель фри", Weight = 100, Price = 100, Category = DishCategory.FastFood },
-        new Dish { Id = 3, RestaurantId = 2, Name = "Печень жареная с луком", Weight = 300, Price = 350, Category = DishCategory.MainCourse },
-        new Dish { Id = 4, RestaurantId = 3, Name = "Маргарита", Weight = 450, Price = 490, Category = DishCategory.FastFood },
-        new Dish { Id = 5, RestaurantId = 4, Name = "Воппер", Weight = 280, Price = 250, Category = DishCategory.FastFood },
-        new Dish { Id = 6, RestaurantId = 6, Name = "Блин с грибами", Weight = 200, Price = 220, Category = DishCategory.MainCourse },
-        new Dish { Id = 7, RestaurantId = 7, Name = "Филадельфия", Weight = 270, Price = 550, Category = DishCategory.MainCourse },
-        new Dish { Id = 8, RestaurantId = 8, Name = "Пепперони", Weight = 500, Price = 600, Category = DishCategory.FastFood },
-        new Dish { Id = 9, RestaurantId = 9, Name = "Капучино", Weight = 300, Price = 180, Category = DishCategory.Drink },
-        new Dish { Id = 10, RestaurantId = 10, Name = "Удон с курицей", Weight = 350, Price = 420, Category = DishCategory.MainCourse }
-    ];
+    private static List<Dish> GetDishes(List<DishCategory> categories)
+    {
+        var fastFood = categories[0];
+        var mainCourse = categories[1];
+        var drink = categories[2];
+        var pizza = categories[3];
+        var sushiAndRolls = categories[4];
+
+        return
+        [
+            new Dish { Id = 1, RestaurantId = 1, Name = "Гранд", Weight = 250, Price = 190, CategoryId = fastFood.Id, Category = fastFood },
+            new Dish { Id = 2, RestaurantId = 1, Name = "Картофель фри", Weight = 100, Price = 100, CategoryId = fastFood.Id, Category = fastFood },
+            new Dish { Id = 3, RestaurantId = 2, Name = "Печень жареная с луком", Weight = 300, Price = 350, CategoryId = mainCourse.Id, Category = mainCourse },
+            new Dish { Id = 4, RestaurantId = 3, Name = "Маргарита", Weight = 450, Price = 490, CategoryId = pizza.Id, Category = pizza },
+            new Dish { Id = 5, RestaurantId = 4, Name = "Воппер", Weight = 280, Price = 250, CategoryId = fastFood.Id, Category = fastFood },
+            new Dish { Id = 6, RestaurantId = 6, Name = "Блин с грибами", Weight = 200, Price = 220, CategoryId = mainCourse.Id, Category = mainCourse },
+            new Dish { Id = 7, RestaurantId = 7, Name = "Филадельфия", Weight = 270, Price = 550, CategoryId = sushiAndRolls.Id, Category = sushiAndRolls },
+            new Dish { Id = 8, RestaurantId = 8, Name = "Пепперони", Weight = 500, Price = 600, CategoryId = pizza.Id, Category = pizza },
+            new Dish { Id = 9, RestaurantId = 9, Name = "Капучино", Weight = 300, Price = 180, CategoryId = drink.Id, Category = drink },
+            new Dish { Id = 10, RestaurantId = 10, Name = "Удон с курицей", Weight = 350, Price = 420, CategoryId = mainCourse.Id, Category = mainCourse }
+        ];
+    }
 
     /// <summary>
     /// Создаёт список курьеров

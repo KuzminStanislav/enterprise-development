@@ -7,7 +7,6 @@ namespace FoodDelivery.Domain.Entities;
 /// <summary>
 /// Блюдо из меню ресторана
 /// </summary>
-[Table("Dishes")]
 public class Dish
 {
     /// <summary>
@@ -25,6 +24,11 @@ public class Dish
     /// Название блюда
     /// </summary>
     public required string Name { get; set; }
+
+    /// <summary>
+    /// Идентификатор категории блюда
+    /// </summary>
+    public int CategoryId { get; set; }
 
     /// <summary>
     /// Вес блюда в граммах

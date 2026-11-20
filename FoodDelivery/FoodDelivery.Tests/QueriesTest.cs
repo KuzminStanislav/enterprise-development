@@ -1,5 +1,4 @@
 ﻿using FoodDelivery.Domain.Entities;
-using FoodDelivery.Domain.Enums;
 
 namespace FoodDelivery.Tests;
 
@@ -104,39 +103,30 @@ public class QueriesTest(QueriesTestFixture fixture) : IClassFixture<QueriesTest
         var startDate = new DateTime(2026, 5, 1);
         var endDate = new DateTime(2026, 5, 31, 23, 59, 59);
 
-        var expectedSummary = new[]
-        {
-            (
-                Category: DishCategory.MainCourse,
-                OrderCount: 5,
-                AverageAmount: 2260m,
-                TotalAmount: 11300m
-            ),
-            (
-                Category: DishCategory.FastFood,
-                OrderCount: 5,
-                AverageAmount: 1300m,
-                TotalAmount: 6500m
-            )
-        };
+        var expectedSummary = new List<(string CategoryName, int OrderCount, decimal AverageAmount, decimal TotalAmount)>
+    {
+        ("Основные блюда", 5, 2260m, 11300m),
+        ("Пицца", 1, 1200m, 1200m),
+        ("Фастфуд", 4, 1325m, 5300m)
+    };
 
         var summary = _orders
             .Where(o => o.OrderTime >= startDate && o.OrderTime <= endDate)
-            .SelectMany(order => _dishes
-                .Where(d => d.RestaurantId == order.RestaurantId)
-                .Select(d => d.Category)
+            .SelectMany(order => fixture.Dishes
+                .Where(d => d.RestaurantId == order.RestaurantId && d.Category != null)
+                .Select(d => d.Category!.Name)
                 .Distinct()
-                .Select(category => new { Order = order, Category = category }))
-            .GroupBy(x => x.Category)
+                .Select(categoryName => new { Order = order, CategoryName = categoryName }))
+            .GroupBy(x => x.CategoryName)
             .Select(g => new
             {
-                Category = g.Key,
+                CategoryName = g.Key,
                 OrderCount = g.Count(),
                 AverageAmount = g.Average(x => x.Order.TotalAmount),
                 TotalAmount = g.Sum(x => x.Order.TotalAmount)
             })
-            .OrderBy(x => x.Category)
-            .Select(x => (x.Category, x.OrderCount, x.AverageAmount, x.TotalAmount))
+            .OrderBy(x => x.CategoryName)
+            .Select(x => (x.CategoryName, x.OrderCount, x.AverageAmount, x.TotalAmount))
             .ToList();
 
         Assert.Equal(expectedSummary, summary);
